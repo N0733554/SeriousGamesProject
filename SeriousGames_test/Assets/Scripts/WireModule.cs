@@ -21,6 +21,8 @@ public class WireModule : Module
         {
             n.GetComponent<SphereCollider>().enabled = false;
         }
+
+        GenerateConnections();
     }
 
     protected override void Update()
@@ -40,7 +42,7 @@ public class WireModule : Module
         {
             //Draw Wire from connecting node to the mouse
             var v3 = Input.mousePosition;
-            v3.z = 17.5f;
+            v3.z = 18f;
             UpdateDrawnWire(NodeGroup[CurrentConnectingIndex].transform.position, Camera.main.ScreenToWorldPoint(v3));
 
             // Check to see if player has clicked while connecting nodes
@@ -89,7 +91,6 @@ public class WireModule : Module
         DrawnWire.AddComponent<LineRenderer>();
         LineRenderer lr = DrawnWire.GetComponent<LineRenderer>();
         lr.material = wireMaterial;
-        lr.SetWidth(wireThickness, wireThickness);
     }
 
     public void Connect(Node a, Node b)
@@ -105,5 +106,35 @@ public class WireModule : Module
     {
         DrawnWire.GetComponent<LineRenderer>().SetPosition(0, start);
         DrawnWire.GetComponent<LineRenderer>().SetPosition(1, end);        
+    }
+
+    void GenerateConnections()
+    {
+        int numberOfConnections = Random.Range(1, 4);
+        List<int> ConnectedNumbers = new List<int>();
+
+        for (int i = 0; i < numberOfConnections; i++)
+        {
+            int x = Random.Range(0, 3);
+            while (ConnectedNumbers.Contains(2 * x + 1))
+            {
+                x = Random.Range(0, 3);
+            }
+            int Odd = 2 * x + 1;
+
+            x = Random.Range(0, 3);
+            while (ConnectedNumbers.Contains(2 * x + 2))
+            {
+                x = Random.Range(0, 3);
+            }
+            int Even = 2 * x + 2;
+
+            ConnectedNumbers.Add(Odd);
+            ConnectedNumbers.Add(Even);
+        }
+        foreach (int i in ConnectedNumbers)
+        {
+            print(i);
+        }
     }
 }

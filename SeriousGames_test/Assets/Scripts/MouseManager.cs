@@ -53,7 +53,6 @@ public class MouseManager : MonoBehaviour
                 break;
             default:
                 break;
-
         }
 
     }

@@ -10,10 +10,6 @@ public class Node : MonoBehaviour
 
     public Color highlightColor;
     public Color baseColor;
-    private void Update()
-    {
-
-    }
 
     public void SelectItem()
     {
