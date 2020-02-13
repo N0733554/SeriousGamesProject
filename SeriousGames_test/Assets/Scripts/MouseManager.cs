@@ -36,11 +36,6 @@ public class MouseManager : MonoBehaviour
             ClearSelection();
         }
 
-        //if(obj.tag == "Selectable")
-        //{
-        //    selectedObject = obj;
-        //    selectedObject.GetComponentInParent<Module>().SelectItem();
-        //}
         switch (obj.tag)
         {
             case "Module":

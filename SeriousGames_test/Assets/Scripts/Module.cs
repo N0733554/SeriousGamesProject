@@ -4,8 +4,10 @@ using UnityEngine;
 
 public class Module : MonoBehaviour
 {
+    public bool Escapable = true;
     public bool Selected = false;
     public bool Active = false;
+    public bool Complete = false;
 
     public Camera cam;
     public Vector3 camPos;
@@ -49,8 +51,11 @@ public class Module : MonoBehaviour
     }
     public virtual void SetInactive()
     {
-        Active = false;
-        cam.GetComponent<CameraScript>().MoveToOrigin();
-        GetComponentInParent<Machine>().EnableModules();
+        if(Escapable)
+        {
+            Active = false;
+            cam.GetComponent<CameraScript>().MoveToOrigin();
+            GetComponentInParent<Machine>().EnableModules();
+        }        
     }
 }

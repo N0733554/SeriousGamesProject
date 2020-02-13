@@ -5,12 +5,14 @@ using UnityEngine;
 public class WireModule : Module
 {
     public Node[] NodeGroup;
-    
+    int[] Connections;
+    public Node selectedNode;
+
     public Material wireMaterial;
     public float wireThickness = 1;
 
     bool Connecting = false;
-    int CurrentConnectingIndex;
+    Node CurrentConnectingNode;
     GameObject DrawnWire;
 
     protected override void Start()
@@ -29,34 +31,67 @@ public class WireModule : Module
     {
         base.Update();
 
-        foreach(Node n in NodeGroup)
+        if (!Complete)
         {
-            if(n.isSelected() && Input.GetMouseButtonDown(0) && !Connecting)
+            if(ConnectionsCompleted())
             {
-                StartConnecting(n);
-                break;
+                Complete = true;
+                print("COMPLETE");
             }
-        }
 
-        if (Connecting) // If the player is in the process of Connecting 2 nodes
-        {
-            //Draw Wire from connecting node to the mouse
-            var v3 = Input.mousePosition;
-            v3.z = 18f;
-            UpdateDrawnWire(NodeGroup[CurrentConnectingIndex].transform.position, Camera.main.ScreenToWorldPoint(v3));
-
-            // Check to see if player has clicked while connecting nodes
-
-            if (Input.GetMouseButtonDown(0))
+            if(Input.GetMouseButtonDown(0))
             {
-                foreach (Node newNode in NodeGroup) // If they have clicked on a node, connect to the 2
+                if (!Connecting && selectedNode)
+                    StartConnecting(selectedNode);                
+            }
+
+            if (Connecting)
+            {
+                UpdateDrawnWire();
+
+                if (Input.GetMouseButtonDown(0))
                 {
-                    if (System.Array.IndexOf(NodeGroup, newNode) != CurrentConnectingIndex && newNode.isSelected())
+                    if (selectedNode)
                     {
-                        Connect(NodeGroup[CurrentConnectingIndex], newNode);
+                        if (isValidConnection(CurrentConnectingNode, selectedNode))
+                        {
+                            print("VALID CONNECTION");
+                            Connect(CurrentConnectingNode, selectedNode);
+                        }
+                        else
+                            print("INVALID CONNECTION");
                     }
+                    StopConnecting();
                 }
             }
+        
+
+            //if (Connecting) // If the player is in the process of Connecting 2 nodes
+            //{
+            //    //Draw Wire from connecting node to the mouse
+            //    
+            //    UpdateDrawnWire(CurrentConnectingNode.transform.position, Camera.main.ScreenToWorldPoint(v3));
+
+            //    // Check to see if player has clicked while connecting nodes
+
+            //    if (Input.GetMouseButtonDown(0))
+            //    {
+            //        foreach (Node newNode in NodeGroup) // If they have clicked on a node, connect to the 2
+            //        {   // IF the new node is not the same as the starting node, the new node is being hovered over & the new node is not already connected 
+            //            if (newNode != CurrentConnectingNode && newNode.isSelected() && !newNode.isConnected())
+            //            {   //Iterates through the connections array
+            //                if (isValidConnection(CurrentConnectingNode, newNode))
+            //                {
+            //                    print("VALID CONNECTION");
+            //                    Connect(CurrentConnectingNode, newNode);
+            //                }
+            //                else
+            //                    print("INVALID CONNECTION");
+            //            }
+            //        }
+            //        Connecting = false;
+            //    }
+            //}
         }
     }
 
@@ -83,9 +118,9 @@ public class WireModule : Module
     public void StartConnecting(Node n)
     {
         Connecting = true; // First Connecting is set to true to begin drawing a wire
+        Escapable = false;
 
-        int a = System.Array.IndexOf(NodeGroup, n); // Then the index of the node is used and set to be the currentConnectingIndex
-        CurrentConnectingIndex = a;
+        CurrentConnectingNode = n;
 
         DrawnWire = new GameObject(); // A new wire object is created
         DrawnWire.AddComponent<LineRenderer>();
@@ -93,17 +128,26 @@ public class WireModule : Module
         lr.material = wireMaterial;
     }
 
+    void StopConnecting()
+    {
+        Connecting = false;
+        Escapable = true;
+    }
+
     public void Connect(Node a, Node b)
     {
-        a.ConnectTo(b);
+        a.Connect();
         print("Connected " + a.name + ": " + b.name);
-        b.ConnectTo(a);
+        b.Connect();
         print("Connected " + b.name + ": " + a.name);
-        Connecting = false;
     }
     
-    void UpdateDrawnWire(Vector3 start, Vector3 end)
+    void UpdateDrawnWire()
     {
+        var start = CurrentConnectingNode.transform.position;
+        var end = Input.mousePosition;
+        end.z = 17.7f;
+        end = Camera.main.ScreenToWorldPoint(end);
         DrawnWire.GetComponent<LineRenderer>().SetPosition(0, start);
         DrawnWire.GetComponent<LineRenderer>().SetPosition(1, end);        
     }
@@ -129,12 +173,50 @@ public class WireModule : Module
             }
             int Even = 2 * x + 2;
 
-            ConnectedNumbers.Add(Odd);
+            NodeGroup[Odd-1].setPartner(NodeGroup[Even-1]);
+            NodeGroup[Even-1].setPartner(NodeGroup[Odd-1]);
+
             ConnectedNumbers.Add(Even);
+            ConnectedNumbers.Add(Odd);
+
+            print("Added Connection between " + Odd + " and " + Even);
         }
-        foreach (int i in ConnectedNumbers)
+    }
+
+    bool isValidConnection(Node a, Node b)
+    {
+        if (a.getPartner() == b)
+            return true;
+        else
+            return false;
+    }
+
+    bool ConnectionsCompleted()
+    {
+        int Required = 0;
+        int Completed = 0;
+        for(int n = 0; n < NodeGroup.Length; n += 2)
         {
-            print(i);
+            if(NodeGroup[n].getPartner())
+            {
+                Required++;
+                if(NodeGroup[n].isConnected())
+                {
+                    Completed++;
+                }
+            }
+        }
+        if (Required == Completed)
+            return true;
+        else
+            return false;
+    }
+
+    void CompleteModule()
+    {
+        foreach (Node n in NodeGroup)
+        {
+            n.GetComponent<SphereCollider>().enabled = false;
         }
     }
 }
